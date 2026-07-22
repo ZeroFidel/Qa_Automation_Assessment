@@ -8,6 +8,7 @@ Google Chrome
 Robot Framework
 SeleniumLibrary
 RequestsLibrary
+GitHub
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Install Dependencies:
 pip install robotframework
