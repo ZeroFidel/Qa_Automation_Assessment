@@ -3,95 +3,82 @@ Library    RequestsLibrary
 Library    Collections
 
 *** Variables ***
-${BASE_URL}      https://api.restful-api.dev
-${OBJECT_NAME}   I am handsome
+${BASE_URL}        https://api.restful-api.dev
+${OBJECT_NAME}     I am handsome
+${UPDATED_NAME}    I am Ugly
 
 *** Test Cases ***
 API CRUD Test
-    [Documentation]    Verify Create, Read, Update, and Delete operations.
+    [Documentation]    Verify Create, Read, Update and Delete operations.
 
-    # Create API Session
     Create Session    api    ${BASE_URL}
 
-    # -------------------------
-    # CREATE
-    # -------------------------
-    ${body}=    Create Dictionary    name=${OBJECT_NAME}
+    # Create a new object
+    ${request_body}=    Create Dictionary    name=${OBJECT_NAME}
 
-    ${create_response}=    POST On Session
+    ${response}=    POST On Session
     ...    api
     ...    /objects
-    ...    json=${body}
+    ...    json=${request_body}
 
-    Should Be Equal As Integers
-    ...    ${create_response.status_code}
-    ...    200
+    Should Be Equal As Integers    ${response.status_code}    200
 
-    ${create_json}=    Set Variable    ${create_response.json()}
+    ${response_body}=    Set Variable    ${response.json()}
 
-    Should Be Equal
-    ...    ${create_json["name"]}
-    ...    ${OBJECT_NAME}
+    Should Be Equal    ${response_body["name"]}    ${OBJECT_NAME}
 
-    ${OBJECT_ID}=    Set Variable
-    ...    ${create_json["id"]}
+    ${object_id}=    Set Variable    ${response_body["id"]}
 
-    Log To Console
-    ...    Created Object ID: ${OBJECT_ID}
+    Log To Console    Object created successfully. ID: ${object_id}
 
-    # -------------------------
-    # READ
-    # -------------------------
-    ${get_response}=    GET On Session
+    # Retrieve the object
+    ${response}=    GET On Session
     ...    api
-    ...    /objects/${OBJECT_ID}
+    ...    /objects/${object_id}
 
-    Should Be Equal As Integers
-    ...    ${get_response.status_code}
-    ...    200
+    Should Be Equal As Integers    ${response.status_code}    200
 
-    ${get_json}=    Set Variable
-    ...    ${get_response.json()}
+    ${response_body}=    Set Variable    ${response.json()}
 
-    Should Be Equal
-    ...    ${get_json["name"]}
-    ...    ${OBJECT_NAME}
+    Should Be Equal    ${response_body["name"]}    ${OBJECT_NAME}
 
-    # -------------------------
-    # UPDATE
-    # -------------------------
-    ${update_body}=    Create Dictionary
-    ...    name=I am Ugly
+    Log To Console    Retrieved object successfully.
 
-    ${update_response}=    PUT On Session
+    # Update the object
+    ${request_body}=    Create Dictionary    name=${UPDATED_NAME}
+
+    ${response}=    PUT On Session
     ...    api
-    ...    /objects/${OBJECT_ID}
-    ...    json=${update_body}
+    ...    /objects/${object_id}
+    ...    json=${request_body}
 
-    Should Be Equal As Integers
-    ...    ${update_response.status_code}
-    ...    200
+    Should Be Equal As Integers    ${response.status_code}    200
 
-    ${update_json}=    Set Variable
-    ...    ${update_response.json()}
+    ${response_body}=    Set Variable    ${response.json()}
 
-    Should Be Equal
-    ...    ${update_json["name"]}
-    ...    I am Ugly
+    Should Be Equal    ${response_body["name"]}    ${UPDATED_NAME}
 
-    # -------------------------
-    # DELETE
-    # -------------------------
-    ${delete_response}=    DELETE On Session
+    Log To Console    Object updated successfully.
+
+    # Delete the object
+    ${response}=    DELETE On Session
     ...    api
-    ...    /objects/${OBJECT_ID}
+    ...    /objects/${object_id}
 
-    Should Be Equal As Integers
-    ...    ${delete_response.status_code}
-    ...    200
+    Should Be Equal As Integers    ${response.status_code}    200
+
+    # Verify the object is no longer available
+    ${response}=    GET On Session
+    ...    api
+    ...    /objects/${object_id}
+    ...    expected_status=404
+
+    Should Be Equal As Integers    ${response.status_code}    404
+
+    Log To Console    Object deleted successfully.
 
 API Negative Test
-    [Documentation]    Verify requesting a non-existent object returns 404.
+    [Documentation]    Verify that an invalid object ID returns a 404 response.
 
     Create Session    api    ${BASE_URL}
 
@@ -100,6 +87,6 @@ API Negative Test
     ...    /objects/999999999999999999
     ...    expected_status=404
 
-    Should Be Equal As Integers
-    ...    ${response.status_code}
-    ...    404
+    Should Be Equal As Integers    ${response.status_code}    404
+
+    Log To Console    Invalid object ID returned the expected 404 response.
